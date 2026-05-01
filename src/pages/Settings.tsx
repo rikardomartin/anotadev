@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Palette, GitBranch, Database, User, Check, ExternalLink, Copy, Eye, EyeOff } from 'lucide-react'
+import { Palette, GitBranch, Database, User, Check, ExternalLink, Copy, Eye, EyeOff, Heart, Phone, AtSign } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -225,8 +225,7 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
           </Section>
 
           {/* Supabase */}
-          <Section title="Supabase" icon={<Database size={16} />} theme={theme}>
-            <p className="text-xs mb-4" style={{ color: theme.colors.textMuted }}>
+          <Section title="Supabase" icon={<Database size={16} />} theme={theme}>            <p className="text-xs mb-4" style={{ color: theme.colors.textMuted }}>
               Configure a conexão com o banco de dados Supabase.
             </p>
 
@@ -329,6 +328,72 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
               </motion.button>
             </div>
           </Section>
+
+          {/* Desenvolvido por */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-6 text-center"
+            style={{
+              background: `linear-gradient(135deg, ${theme.colors.bgCard}, ${theme.colors.bgSecondary})`,
+              border: `1px solid ${theme.colors.border}`,
+            }}
+          >
+            <div className="flex items-center justify-center gap-1.5 mb-3">
+              <span className="text-xs font-semibold" style={{ color: theme.colors.textMuted }}>
+                Desenvolvido com
+              </span>
+              <Heart size={13} style={{ color: theme.colors.accent }} fill={theme.colors.accent} />
+              <span className="text-xs font-semibold" style={{ color: theme.colors.textMuted }}>
+                por
+              </span>
+            </div>
+
+            <p
+              className="text-lg font-black mb-4"
+              style={{
+                fontFamily: 'Montserrat, sans-serif',
+                background: `linear-gradient(135deg, ${theme.colors.gradientFrom}, ${theme.colors.gradientTo})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Ricardo Martins
+            </p>
+
+            <div className="flex items-center justify-center gap-6">
+              <a
+                href="tel:21970902074"
+                className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${theme.colors.accent}20` }}
+                >
+                  <Phone size={13} style={{ color: theme.colors.accent }} />
+                </div>
+                (21) 97090-2074
+              </a>
+
+              <div className="w-px h-6" style={{ backgroundColor: theme.colors.border }} />
+
+              <a
+                href="mailto:tecnicorikardo@gmail.com"
+                className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${theme.colors.accent}20` }}
+                >
+                  <AtSign size={13} style={{ color: theme.colors.accent }} />
+                </div>
+                tecnicorikardo
+              </a>
+            </div>
+          </motion.div>
+
         </div>
       </div>
     </div>

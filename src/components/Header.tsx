@@ -3,8 +3,6 @@ import {
   LogOut,
   Settings,
   LayoutDashboard,
-  Phone,
-  AtSign,
   ChevronDown,
   Sun,
   Moon,
@@ -112,18 +110,6 @@ export default function Header({ currentPage, onNavigate }: Props) {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        {/* Contact info */}
-        <div className="hidden lg:flex items-center gap-3">
-          <div className="flex items-center gap-1.5" style={{ color: theme.colors.textMuted }}>
-            <Phone size={12} />
-            <span className="text-xs font-medium">21970902074</span>
-          </div>
-          <div className="flex items-center gap-1.5" style={{ color: theme.colors.textMuted }}>
-            <AtSign size={12} />
-            <span className="text-xs font-medium">tenicorikardo</span>
-          </div>
-        </div>
-
         <div className="w-px h-5" style={{ backgroundColor: theme.colors.border }} />
 
         {/* Dark/Light toggle */}
