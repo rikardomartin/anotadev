@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Gradient border animation */
+@keyframes gradientRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientBorder {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 12px;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(270deg, #ff0040, #ff6b00, #ff0040, #8b00ff);
+  background-size: 400% 400%;
+  animation: gradientBorder 4s ease infinite;
+  z-index: -1;
+}
+
+.gradient-border-blue::before {
+  background: linear-gradient(270deg, #00d4ff, #0066ff, #00d4ff, #7c3aed);
+  background-size: 400% 400%;
+  animation: gradientBorder 4s ease infinite;
+}
+
+.gradient-border-green::before {
+  background: linear-gradient(270deg, #00ff88, #00cc44, #00ff88, #00ffcc);
+  background-size: 400% 400%;
+  animation: gradientBorder 4s ease infinite;
+}
+
+.gradient-border-ocean::before {
+  background: linear-gradient(270deg, #0ea5e9, #06b6d4, #0ea5e9, #3b82f6);
+  background-size: 400% 400%;
+  animation: gradientBorder 4s ease infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* FAB pulse */
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 64, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 0, 64, 0); }
+}
+
+.fab-pulse {
+  animation: fabPulse 2s ease-in-out infinite;
+}
+
+/* Toast */
+.toast-success {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+}
