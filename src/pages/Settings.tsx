@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Palette, GitBranch, Database, User, Check, ExternalLink, Copy, Eye, EyeOff, Heart, Phone, AtSign } from 'lucide-react'
+import { Palette, GitBranch, Database, User, Check, ExternalLink, Copy, Eye, EyeOff, Heart, Phone, AtSign, Webhook, Link, Zap, Star } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { GITHUB_APP, checkRateLimit } from '../lib/github'
 import toast from 'react-hot-toast'
 
 export default function Settings() {
@@ -14,6 +15,36 @@ export default function Settings() {
   const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('sb-key') || '')
   const [showToken, setShowToken] = useState(false)
   const [showKey, setShowKey] = useState(false)
+
+  const WEBHOOK_SECRET = 'AnotaDev@2026#Webhook$Ricardo!'
+  const WEBHOOK_URL = 'https://cmksgidpvuhkfcqlbgkn.supabase.co/functions/v1/github-webhook'
+  const [rateLimit, setRateLimit] = useState<{ remaining: number; limit: number } | null>(null)
+  const [checkingRate, setCheckingRate] = useState(false)
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success(`${label} copiado!`, {
+      style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
+      iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+    })
+  }
+
+  const handleCheckRateLimit = async () => {
+    setCheckingRate(true)
+    const result = await checkRateLimit(githubToken)
+    if (result) {
+      setRateLimit(result)
+      toast.success(`API: ${result.remaining}/${result.limit} requests restantes`, {
+        style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
+        iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+      })
+    } else {
+      toast.error('Não foi possível verificar o rate limit', {
+        style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
+      })
+    }
+    setCheckingRate(false)
+  }
 
   const saveGitHub = () => {
     localStorage.setItem('gh-token', githubToken)
@@ -326,6 +357,169 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
               >
                 Salvar Supabase
               </motion.button>
+            </div>
+          </Section>
+
+          {/* GitHub App */}
+          <Section title="GitHub App — AnotaDev" icon={<Star size={16} />} theme={theme}>
+            <p className="text-xs mb-4" style={{ color: theme.colors.textMuted }}>
+              App oficial do AnotaDev registrado no GitHub. Use o Client ID para autenticação OAuth e acesso a repositórios privados com rate limit elevado (5.000 req/h).
+            </p>
+
+            {/* App info cards */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {[
+                { label: 'App ID', value: GITHUB_APP.appId, icon: '🆔' },
+                { label: 'Client ID', value: GITHUB_APP.clientId, icon: '🔑' },
+                { label: 'Owner', value: `@${GITHUB_APP.owner}`, icon: '👤' },
+                { label: 'Rate Limit', value: rateLimit ? `${rateLimit.remaining}/${rateLimit.limit}` : 'Verificar →', icon: '⚡' },
+              ].map(item => (
+                <div
+                  key={item.label}
+                  className="p-3 rounded-xl"
+                  style={{ backgroundColor: theme.colors.bgSecondary, border: `1px solid ${theme.colors.border}` }}
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-xs">{item.icon}</span>
+                    <span className="text-xs font-bold" style={{ color: theme.colors.textMuted }}>{item.label}</span>
+                  </div>
+                  <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.colors.textSecondary }}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => copyToClipboard(GITHUB_APP.clientId, 'Client ID')}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
+                style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent, border: `1px solid ${theme.colors.accent}30` }}
+              >
+                <Copy size={12} />
+                Copiar Client ID
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCheckRateLimit}
+                disabled={checkingRate}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
+                style={{ backgroundColor: `${theme.colors.accentSecondary}20`, color: theme.colors.accentSecondary, border: `1px solid ${theme.colors.accentSecondary}30` }}
+              >
+                <Zap size={12} />
+                {checkingRate ? 'Verificando...' : 'Checar Rate Limit'}
+              </motion.button>
+
+              <motion.a
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                href={GITHUB_APP.installUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
+                style={{ backgroundColor: theme.colors.bgSecondary, color: theme.colors.textSecondary, border: `1px solid ${theme.colors.border}` }}
+              >
+                <ExternalLink size={12} />
+                Instalar App no GitHub
+              </motion.a>
+            </div>
+          </Section>
+
+          {/* Webhook */}
+          <Section title="GitHub Webhook" icon={<Webhook size={16} />} theme={theme}>
+            <p className="text-xs mb-4" style={{ color: theme.colors.textMuted }}>
+              Configure o webhook no GitHub para atualizar automaticamente o campo "Já implantado" a cada novo commit.
+            </p>
+
+            {/* Webhook URL */}
+            <div className="mb-4">
+              <label className="text-xs font-bold mb-2 block" style={{ color: theme.colors.textMuted }}>
+                PAYLOAD URL — cole no GitHub
+              </label>
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                style={{ backgroundColor: theme.colors.bgSecondary, border: `1px solid ${theme.colors.border}` }}
+              >
+                <Link size={13} style={{ color: theme.colors.accent, flexShrink: 0 }} />
+                <span className="flex-1 text-xs font-mono truncate" style={{ color: theme.colors.textSecondary }}>
+                  {WEBHOOK_URL}
+                </span>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => copyToClipboard(WEBHOOK_URL, 'URL')}
+                  className="flex-shrink-0 p-1.5 rounded-lg"
+                  style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent }}
+                >
+                  <Copy size={13} />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Webhook Secret */}
+            <div className="mb-4">
+              <label className="text-xs font-bold mb-2 block" style={{ color: theme.colors.textMuted }}>
+                SECRET — cole no GitHub E no campo "Webhook Secret" de cada projeto
+              </label>
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                style={{
+                  backgroundColor: theme.colors.bgSecondary,
+                  border: `1px solid ${theme.colors.accentSecondary}40`,
+                }}
+              >
+                <span className="text-xs" style={{ color: theme.colors.accentSecondary }}>🔑</span>
+                <span className="flex-1 text-sm font-mono font-bold" style={{ color: theme.colors.accentSecondary }}>
+                  {WEBHOOK_SECRET}
+                </span>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => copyToClipboard(WEBHOOK_SECRET, 'Secret')}
+                  className="flex-shrink-0 p-1.5 rounded-lg"
+                  style={{ backgroundColor: `${theme.colors.accentSecondary}20`, color: theme.colors.accentSecondary }}
+                >
+                  <Copy size={13} />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Instruções */}
+            <div
+              className="rounded-xl p-4"
+              style={{ backgroundColor: theme.colors.bgSecondary, border: `1px solid ${theme.colors.border}` }}
+            >
+              <p className="text-xs font-bold mb-3" style={{ color: theme.colors.textSecondary }}>
+                📋 Checklist de configuração
+              </p>
+              {[
+                { step: '1', text: 'No GitHub: Settings → Webhooks → Add webhook', done: true },
+                { step: '2', text: 'Cole a Payload URL acima', done: true },
+                { step: '3', text: 'Content type: application/json', done: true },
+                { step: '4', text: 'Cole o Secret acima no campo Secret do GitHub', done: false },
+                { step: '5', text: 'Selecione "Just the push event"', done: false },
+                { step: '6', text: 'No AnotaDev, abra cada projeto → cole o mesmo Secret no campo "Webhook Secret"', done: false },
+              ].map(item => (
+                <div key={item.step} className="flex items-start gap-2 mb-2">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
+                    style={{
+                      backgroundColor: item.done ? `${theme.colors.accent}20` : `${theme.colors.accentSecondary}20`,
+                      color: item.done ? theme.colors.accent : theme.colors.accentSecondary,
+                    }}
+                  >
+                    {item.step}
+                  </div>
+                  <span className="text-xs leading-relaxed" style={{ color: theme.colors.textMuted }}>
+                    {item.text}
+                  </span>
+                </div>
+              ))}
             </div>
           </Section>
 

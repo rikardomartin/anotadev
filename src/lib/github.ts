@@ -2,6 +2,26 @@ import type { GitHubRepo } from './supabase'
 
 const GITHUB_API = 'https://api.github.com'
 
+// GitHub App credentials
+export const GITHUB_APP = {
+  appId: '3571929',
+  clientId: 'Iv23liiE9qXh3VBn69Yv',
+  owner: 'rikardomartin',
+  appUrl: 'https://github.com/apps/anotadev',
+  installUrl: 'https://github.com/apps/anotadev/installations/new',
+}
+
+// Build auth headers — prefers token, falls back to nothing (public API)
+function buildHeaders(token?: string): Record<string, string> {
+  const h: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+  const stored = token || localStorage.getItem('gh-token') || ''
+  if (stored) h['Authorization'] = `Bearer ${stored}`
+  return h
+}
+
 // Extract owner/repo from a GitHub URL
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   if (!url) return null
@@ -20,15 +40,11 @@ export async function fetchGitHubRepo(url: string, token?: string): Promise<GitH
   const parsed = parseGitHubUrl(url)
   if (!parsed) return null
 
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-  }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-
   try {
-    const res = await fetch(`${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}`, { headers })
+    const res = await fetch(
+      `${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}`,
+      { headers: buildHeaders(token) }
+    )
     if (!res.ok) return null
     const data = await res.json()
     return {
@@ -50,17 +66,10 @@ export async function fetchGitHubRepo(url: string, token?: string): Promise<GitH
 
 // Fetch all repos for a user
 export async function fetchUserRepos(username: string, token?: string): Promise<GitHubRepo[]> {
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-  }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-
   try {
     const res = await fetch(
       `${GITHUB_API}/users/${username}/repos?sort=updated&per_page=100`,
-      { headers }
+      { headers: buildHeaders(token) }
     )
     if (!res.ok) return []
     const data = await res.json()
@@ -78,6 +87,50 @@ export async function fetchUserRepos(username: string, token?: string): Promise<
     }))
   } catch {
     return []
+  }
+}
+
+// Fetch recent commits for a repo
+export async function fetchRecentCommits(
+  url: string,
+  token?: string,
+  perPage = 5
+): Promise<{ sha: string; message: string; author: string; date: string; url: string }[]> {
+  const parsed = parseGitHubUrl(url)
+  if (!parsed) return []
+
+  try {
+    const res = await fetch(
+      `${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}/commits?per_page=${perPage}`,
+      { headers: buildHeaders(token) }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.map((c: any) => ({
+      sha: c.sha?.slice(0, 7) || '',
+      message: c.commit?.message?.split('\n')[0] || '',
+      author: c.commit?.author?.name || '',
+      date: c.commit?.author?.date || '',
+      url: c.html_url || '',
+    }))
+  } catch {
+    return []
+  }
+}
+
+// Check GitHub API rate limit
+export async function checkRateLimit(token?: string): Promise<{ remaining: number; limit: number; reset: Date } | null> {
+  try {
+    const res = await fetch(`${GITHUB_API}/rate_limit`, { headers: buildHeaders(token) })
+    if (!res.ok) return null
+    const data = await res.json()
+    return {
+      remaining: data.rate.remaining,
+      limit: data.rate.limit,
+      reset: new Date(data.rate.reset * 1000),
+    }
+  } catch {
+    return null
   }
 }
 
