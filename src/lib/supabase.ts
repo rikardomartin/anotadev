@@ -26,8 +26,11 @@ export type Projeto = {
   github_url: string
   contas_vinculadas: string[]
   descricao: string
+  tech_stack: string[]
   pendencias: ChecklistItem[]
   concluidos: ChecklistItem[]
+  webhook_secret?: string
+  last_commit_msg?: string
   created_at?: string
   updated_at?: string
 }

@@ -28,26 +28,49 @@ export type Theme = {
 
 export const themes: Theme[] = [
   {
-    id: 'red-black',
-    name: 'Red & Black',
+    id: 'anotadev-dark',
+    name: 'Anotadev Dark',
     mode: 'dark',
     colors: {
-      bg: '#0a0a0a',
-      bgSecondary: '#111111',
-      bgCard: '#161616',
-      bgModal: '#1a1a1a',
-      header: '#0d0d0d',
+      bg: '#080808',
+      bgSecondary: '#0f0f0f',
+      bgCard: '#141414',
+      bgModal: '#181818',
+      header: '#0a0a0a',
       text: '#ffffff',
-      textMuted: '#888888',
-      textSecondary: '#cccccc',
-      accent: '#ff0040',
-      accentHover: '#ff1a55',
-      accentSecondary: '#ff6b00',
-      border: 'rgba(255,0,64,0.2)',
-      borderHover: 'rgba(255,0,64,0.5)',
-      gradientFrom: '#ff0040',
-      gradientTo: '#ff6b00',
+      textMuted: '#777777',
+      textSecondary: '#bbbbbb',
+      accent: '#ff0033',
+      accentHover: '#ff1a4d',
+      accentSecondary: '#ff4400',
+      border: 'rgba(255,0,51,0.18)',
+      borderHover: 'rgba(255,0,51,0.5)',
+      gradientFrom: '#ff0033',
+      gradientTo: '#ff4400',
       gradientClass: 'gradient-border',
+    },
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk',
+    mode: 'dark',
+    colors: {
+      bg: '#06000f',
+      bgSecondary: '#0d0020',
+      bgCard: '#110030',
+      bgModal: '#150038',
+      header: '#08001a',
+      text: '#f0e6ff',
+      textMuted: '#7755aa',
+      textSecondary: '#cc99ff',
+      accent: '#bf00ff',
+      accentHover: '#cc33ff',
+      accentSecondary: '#00ffcc',
+      border: 'rgba(191,0,255,0.22)',
+      borderHover: 'rgba(191,0,255,0.6)',
+      gradientFrom: '#bf00ff',
+      gradientTo: '#00ffcc',
+      gradientClass: 'gradient-border gradient-border-cyber',
     },
   },
   {
@@ -119,6 +142,29 @@ export const themes: Theme[] = [
       gradientClass: 'gradient-border gradient-border-ocean',
     },
   },
+  {
+    id: 'light',
+    name: 'Light Mode',
+    mode: 'light',
+    colors: {
+      bg: '#f5f5f7',
+      bgSecondary: '#ebebed',
+      bgCard: '#ffffff',
+      bgModal: '#ffffff',
+      header: '#ffffff',
+      text: '#111111',
+      textMuted: '#888888',
+      textSecondary: '#444444',
+      accent: '#ff0033',
+      accentHover: '#cc0029',
+      accentSecondary: '#ff4400',
+      border: 'rgba(0,0,0,0.1)',
+      borderHover: 'rgba(255,0,51,0.4)',
+      gradientFrom: '#ff0033',
+      gradientTo: '#ff4400',
+      gradientClass: 'gradient-border',
+    },
+  },
 ]
 
 type ThemeContextType = {
@@ -135,7 +181,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeId] = useState(() => {
-    return localStorage.getItem('anotadev-theme') || 'red-black'
+    return localStorage.getItem('anotadev-theme') || 'anotadev-dark'
   })
 
   const theme = themes.find(t => t.id === themeId) || themes[0]

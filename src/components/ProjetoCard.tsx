@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Wifi,
   WifiOff,
+  GitCommitHorizontal,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import type { Projeto, GitHubRepo } from '../lib/supabase'
@@ -32,52 +33,75 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
   const progress = total > 0 ? Math.round((totalConcluidos / total) * 100) : 0
 
   const statusColor =
-    progress === 100
-      ? '#00cc44'
-      : progress >= 50
-      ? theme.colors.accentSecondary
-      : theme.colors.accent
+    progress === 100 ? '#00cc44'
+    : progress >= 50 ? theme.colors.accentSecondary
+    : theme.colors.accent
+
+  const isCyberpunk = theme.id === 'cyberpunk'
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      whileHover={{ y: -4, scale: 1.01 }}
-      className={`relative rounded-xl overflow-hidden cursor-pointer group ${theme.colors.gradientClass}`}
-      style={{ backgroundColor: theme.colors.bgCard }}
+      transition={{ duration: 0.35, delay: index * 0.06 }}
+      whileHover={{ y: -5, scale: 1.015 }}
+      className={`relative rounded-2xl overflow-hidden cursor-pointer group ${theme.colors.gradientClass}`}
+      style={{
+        background: theme.mode === 'light'
+          ? 'rgba(255,255,255,0.85)'
+          : 'rgba(255,255,255,0.03)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      }}
     >
-      {/* Inner content */}
       <div className="p-5 flex flex-col gap-3 h-full">
-        {/* Header row */}
+        {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3
-              className="font-bold text-base leading-tight truncate"
-              style={{ color: theme.colors.text, fontFamily: 'Montserrat, Inter, sans-serif' }}
+              className={`font-black text-base leading-tight truncate ${isCyberpunk ? 'neon-glow' : ''}`}
+              style={{
+                color: theme.colors.text,
+                fontFamily: 'Montserrat, Inter, sans-serif',
+                ...(isCyberpunk ? { textShadow: `0 0 8px ${theme.colors.accent}` } : {}),
+              }}
             >
               {projeto.nome}
             </h3>
-            {githubData?.language && (
-              <span
-                className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{
-                  backgroundColor: `${theme.colors.accent}20`,
-                  color: theme.colors.accent,
-                }}
-              >
-                {githubData.language}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {githubData?.language && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  style={{
+                    backgroundColor: `${theme.colors.accent}20`,
+                    color: theme.colors.accent,
+                  }}
+                >
+                  {githubData.language}
+                </span>
+              )}
+              {projeto.tech_stack?.slice(0, 2).map(t => (
+                <span
+                  key={t}
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: `${theme.colors.accentSecondary}15`,
+                    color: theme.colors.accentSecondary,
+                  }}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => { e.stopPropagation(); onEdit(projeto) }}
-              className="p-1.5 rounded-lg transition-colors"
+              onClick={e => { e.stopPropagation(); onEdit(projeto) }}
+              className="p-1.5 rounded-lg"
               style={{ color: theme.colors.textMuted }}
               onMouseEnter={e => (e.currentTarget.style.color = theme.colors.accent)}
               onMouseLeave={e => (e.currentTarget.style.color = theme.colors.textMuted)}
@@ -85,10 +109,10 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
               <Edit3 size={14} />
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => { e.stopPropagation(); onDelete(projeto.id!) }}
-              className="p-1.5 rounded-lg transition-colors"
+              onClick={e => { e.stopPropagation(); onDelete(projeto.id!) }}
+              className="p-1.5 rounded-lg"
               style={{ color: theme.colors.textMuted }}
               onMouseEnter={e => (e.currentTarget.style.color = '#ff4444')}
               onMouseLeave={e => (e.currentTarget.style.color = theme.colors.textMuted)}
@@ -99,13 +123,32 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
         </div>
 
         {/* Description */}
-        {projeto.descricao && (
+        {(githubData?.description || projeto.descricao) && (
           <p
             className="text-xs leading-relaxed line-clamp-2"
             style={{ color: theme.colors.textMuted }}
           >
             {githubData?.description || projeto.descricao}
           </p>
+        )}
+
+        {/* Last commit */}
+        {projeto.last_commit_msg && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg commit-pop"
+            style={{
+              backgroundColor: `${theme.colors.accentSecondary}12`,
+              border: `1px solid ${theme.colors.accentSecondary}25`,
+            }}
+          >
+            <GitCommitHorizontal size={12} style={{ color: theme.colors.accentSecondary, flexShrink: 0 }} />
+            <span
+              className="text-xs truncate font-mono"
+              style={{ color: theme.colors.accentSecondary }}
+            >
+              {projeto.last_commit_msg}
+            </span>
+          </div>
         )}
 
         {/* GitHub stats */}
@@ -122,7 +165,7 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
             {githubData.open_issues_count > 0 && (
               <div className="flex items-center gap-1" style={{ color: '#ff9900' }}>
                 <AlertCircle size={12} />
-                <span className="text-xs">{githubData.open_issues_count} issues</span>
+                <span className="text-xs">{githubData.open_issues_count}</span>
               </div>
             )}
             <div className="flex items-center gap-1 ml-auto" style={{ color: theme.colors.textMuted }}>
@@ -139,21 +182,22 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
               <span className="text-xs font-medium" style={{ color: theme.colors.textMuted }}>
                 Progresso
               </span>
-              <span className="text-xs font-bold" style={{ color: statusColor }}>
+              <span className="text-xs font-black" style={{ color: statusColor }}>
                 {progress}%
               </span>
             </div>
             <div
               className="h-1.5 rounded-full overflow-hidden"
-              style={{ backgroundColor: `${theme.colors.border}` }}
+              style={{ backgroundColor: `${theme.colors.accent}18` }}
             >
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.8, delay: index * 0.05 + 0.3, ease: 'easeOut' }}
+                transition={{ duration: 1, delay: index * 0.06 + 0.3, ease: 'easeOut' }}
                 className="h-full rounded-full"
                 style={{
                   background: `linear-gradient(90deg, ${theme.colors.gradientFrom}, ${theme.colors.gradientTo})`,
+                  boxShadow: `0 0 6px ${theme.colors.gradientFrom}80`,
                 }}
               />
             </div>
@@ -181,15 +225,14 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
           className="flex items-center justify-between pt-2 mt-auto border-t"
           style={{ borderColor: theme.colors.border }}
         >
-          {/* Contas vinculadas */}
           {projeto.contas_vinculadas?.length > 0 && (
             <div className="flex items-center gap-1">
               {projeto.contas_vinculadas.slice(0, 3).map((conta, i) => (
                 <div
                   key={i}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                  className="w-5 h-5 rounded-full flex items-center justify-center font-bold"
                   style={{
-                    backgroundColor: theme.colors.accent,
+                    background: `linear-gradient(135deg, ${theme.colors.gradientFrom}, ${theme.colors.gradientTo})`,
                     color: '#fff',
                     fontSize: '9px',
                   }}
@@ -206,7 +249,6 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
             </div>
           )}
 
-          {/* GitHub link */}
           {projeto.github_url && (
             <motion.a
               whileHover={{ scale: 1.1 }}
@@ -214,7 +256,7 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="flex items-center gap-1 text-xs transition-colors ml-auto"
+              className="flex items-center gap-1 text-xs ml-auto"
               style={{ color: theme.colors.textMuted }}
               onMouseEnter={e => (e.currentTarget.style.color = theme.colors.accent)}
               onMouseLeave={e => (e.currentTarget.style.color = theme.colors.textMuted)}

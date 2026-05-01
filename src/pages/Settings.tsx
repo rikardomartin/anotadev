@@ -41,14 +41,16 @@ CREATE TABLE IF NOT EXISTS projetos (
   nome TEXT NOT NULL,
   github_url TEXT DEFAULT '',
   contas_vinculadas JSONB DEFAULT '[]',
+  tech_stack JSONB DEFAULT '[]',
   descricao TEXT DEFAULT '',
   pendencias JSONB DEFAULT '[]',
   concluidos JSONB DEFAULT '[]',
+  webhook_secret TEXT DEFAULT '',
+  last_commit_msg TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- RLS
 ALTER TABLE projetos ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage own projects"
@@ -56,7 +58,6 @@ CREATE POLICY "Users can manage own projects"
   USING (user_id = auth.uid()::text)
   WITH CHECK (user_id = auth.uid()::text);
 
--- Index
 CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
     navigator.clipboard.writeText(sql)
     toast.success('SQL copiado!', {
@@ -115,7 +116,7 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
 
           {/* Themes */}
           <Section title="Temas" icon={<Palette size={16} />} theme={theme}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {themes.map(t => (
                 <motion.button
                   key={t.id}
@@ -265,9 +266,12 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
   nome TEXT NOT NULL,
   github_url TEXT DEFAULT '',
   contas_vinculadas JSONB DEFAULT '[]',
+  tech_stack JSONB DEFAULT '[]',
   descricao TEXT DEFAULT '',
   pendencias JSONB DEFAULT '[]',
   concluidos JSONB DEFAULT '[]',
+  webhook_secret TEXT DEFAULT '',
+  last_commit_msg TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );`}
