@@ -15,6 +15,7 @@ export default function Settings() {
   const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('sb-key') || '')
   const [showToken, setShowToken] = useState(false)
   const [showKey, setShowKey] = useState(false)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   const WEBHOOK_SECRET = 'AnotaDev@2026#Webhook$Ricardo!'
   const WEBHOOK_URL = 'https://cmksgidpvuhkfcqlbgkn.supabase.co/functions/v1/github-webhook'
@@ -28,8 +29,12 @@ export default function Settings() {
     }
   }, [])
 
-  const copyToClipboard = (text: string, label: string) => {
+  const copyToClipboard = (text: string, label: string, key?: string) => {
     navigator.clipboard.writeText(text)
+    if (key) {
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 1500)
+    }
     toast.success(`${label} copiado!`, {
       style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
       iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
@@ -100,6 +105,8 @@ CREATE POLICY "Users can manage own projects"
 
 CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
     navigator.clipboard.writeText(sql)
+    setCopiedKey('sql')
+    setTimeout(() => setCopiedKey(null), 1500)
     toast.success('SQL copiado!', {
       style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
     })
@@ -283,10 +290,10 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
                   whileTap={{ scale: 0.95 }}
                   onClick={copySQL}
                   className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
-                  style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent }}
+                  style={{ backgroundColor: `${theme.colors.accent}20`, color: copiedKey === 'sql' ? '#00cc44' : theme.colors.accent }}
                 >
-                  <Copy size={12} />
-                  Copiar SQL
+                  {copiedKey === 'sql' ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedKey === 'sql' ? 'Copiado!' : 'Copiar SQL'}
                 </motion.button>
               </div>
               <pre
@@ -404,12 +411,16 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => copyToClipboard(GITHUB_APP.clientId, 'Client ID')}
+                onClick={() => copyToClipboard(GITHUB_APP.clientId, 'Client ID', 'clientId')}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold"
-                style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent, border: `1px solid ${theme.colors.accent}30` }}
+                style={{
+                  backgroundColor: `${theme.colors.accent}20`,
+                  color: copiedKey === 'clientId' ? '#00cc44' : theme.colors.accent,
+                  border: `1px solid ${copiedKey === 'clientId' ? '#00cc4440' : theme.colors.accent + '30'}`,
+                }}
               >
-                <Copy size={12} />
-                Copiar Client ID
+                {copiedKey === 'clientId' ? <Check size={12} /> : <Copy size={12} />}
+                {copiedKey === 'clientId' ? 'Copiado!' : 'Copiar Client ID'}
               </motion.button>
 
               <motion.button
@@ -461,11 +472,11 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => copyToClipboard(WEBHOOK_URL, 'URL')}
+                  onClick={() => copyToClipboard(WEBHOOK_URL, 'URL', 'webhookUrl')}
                   className="flex-shrink-0 p-1.5 rounded-lg"
-                  style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent }}
+                  style={{ backgroundColor: `${theme.colors.accent}20`, color: copiedKey === 'webhookUrl' ? '#00cc44' : theme.colors.accent }}
                 >
-                  <Copy size={13} />
+                  {copiedKey === 'webhookUrl' ? <Check size={13} /> : <Copy size={13} />}
                 </motion.button>
               </div>
             </div>
@@ -489,11 +500,11 @@ CREATE INDEX IF NOT EXISTS projetos_user_id_idx ON projetos(user_id);`
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => copyToClipboard(WEBHOOK_SECRET, 'Secret')}
+                  onClick={() => copyToClipboard(WEBHOOK_SECRET, 'Secret', 'webhookSecret')}
                   className="flex-shrink-0 p-1.5 rounded-lg"
-                  style={{ backgroundColor: `${theme.colors.accentSecondary}20`, color: theme.colors.accentSecondary }}
+                  style={{ backgroundColor: `${theme.colors.accentSecondary}20`, color: copiedKey === 'webhookSecret' ? '#00cc44' : theme.colors.accentSecondary }}
                 >
-                  <Copy size={13} />
+                  {copiedKey === 'webhookSecret' ? <Check size={13} /> : <Copy size={13} />}
                 </motion.button>
               </div>
             </div>

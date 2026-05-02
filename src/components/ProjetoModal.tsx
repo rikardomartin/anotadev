@@ -213,6 +213,21 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
   const handleSave = async () => {
     if (!nome.trim()) return
     setSaving(true)
+
+    // Salva item pendente do checklist caso o usuário não tenha clicado em "+"
+    let finalPendencias = pendencias
+    let finalConcluidos = concluidos
+    if (pendenciaInput.trim()) {
+      finalPendencias = [...pendencias, { id: nanoid(), texto: pendenciaInput.trim(), feito: false }]
+      setPendencias(finalPendencias)
+      setPendenciaInput('')
+    }
+    if (concluidoInput.trim()) {
+      finalConcluidos = [...concluidos, { id: nanoid(), texto: concluidoInput.trim(), feito: true }]
+      setConcluidos(finalConcluidos)
+      setConcluidoInput('')
+    }
+
     try {
       await onSave({
         nome: nome.trim(),
@@ -220,8 +235,8 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
         github_url: githubUrl.trim(),
         contas_vinculadas: contas,
         tech_stack: techStack,
-        pendencias,
-        concluidos,
+        pendencias: finalPendencias,
+        concluidos: finalConcluidos,
         webhook_secret: webhookSecret,
         last_commit_msg: lastCommitMsg,
       })

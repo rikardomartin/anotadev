@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   NotebookPen, Search, Grid3X3, List, RefreshCw,
-  GitBranch, Loader2, GitCommitHorizontal, Wifi,
+  GitBranch, Loader2, GitCommitHorizontal, Wifi, X, Trash2,
+  GitBranch as GitBranchIcon, Webhook, CheckSquare,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useProjetos } from '../hooks/useProjetos'
@@ -106,6 +107,9 @@ export default function Dashboard() {
   const [githubCache, setGithubCache] = useState<Record<string, GitHubRepo | null>>({})
   const [loadingGH, setLoadingGH] = useState(false)
   const [realtimeActive] = useState(true)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteNome, setConfirmDeleteNome] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   // Fetch GitHub data for all projects
   useEffect(() => {
@@ -177,16 +181,34 @@ export default function Dashboard() {
     setModalOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este projeto?')) return
-    await deletarProjeto(id)
-    toast.success('Projeto excluído', {
-      style: {
-        background: theme.colors.bgModal,
-        color: theme.colors.text,
-        border: `1px solid ${theme.colors.border}`,
-      },
-    })
+  const handleDeleteRequest = (id: string, nome: string) => {
+    setConfirmDeleteId(id)
+    setConfirmDeleteNome(nome)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteId) return
+    setDeleting(true)
+    try {
+      await deletarProjeto(confirmDeleteId)
+      toast.success(`"${confirmDeleteNome}" excluído com sucesso`, {
+        style: {
+          background: theme.colors.bgModal,
+          color: theme.colors.text,
+          border: `1px solid ${theme.colors.border}`,
+        },
+        iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+      })
+    } finally {
+      setDeleting(false)
+      setConfirmDeleteId(null)
+      setConfirmDeleteNome('')
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setConfirmDeleteId(null)
+    setConfirmDeleteNome('')
   }
 
   return (
@@ -265,6 +287,24 @@ export default function Dashboard() {
               className="flex-1 bg-transparent outline-none text-sm"
               style={{ color: theme.colors.text }}
             />
+            <AnimatePresence>
+              {search && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setSearch('')}
+                  className="flex-shrink-0 p-0.5 rounded-full"
+                  style={{ color: theme.colors.textMuted }}
+                  onMouseEnter={e => (e.currentTarget.style.color = theme.colors.text)}
+                  onMouseLeave={e => (e.currentTarget.style.color = theme.colors.textMuted)}
+                  title="Limpar busca"
+                >
+                  <X size={14} />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Refresh */}
@@ -343,7 +383,7 @@ export default function Dashboard() {
                   projeto={projeto}
                   githubData={githubCache[projeto.id!]}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={(id) => handleDeleteRequest(id, projeto.nome)}
                   index={i}
                 />
               ))}
@@ -371,6 +411,77 @@ export default function Dashboard() {
         <NotebookPen size={22} color="#fff" />
       </motion.button>
 
+      {/* Modal de confirmação de exclusão */}
+      <AnimatePresence>
+        {confirmDeleteId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 16 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="w-full max-w-sm rounded-2xl shadow-2xl p-6"
+              style={{
+                backgroundColor: theme.colors.bgModal,
+                border: `1px solid ${theme.colors.border}`,
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                style={{ backgroundColor: 'rgba(255,68,68,0.12)' }}
+              >
+                <Trash2 size={22} style={{ color: '#ff4444' }} />
+              </div>
+              <h3 className="text-lg font-black mb-1" style={{ color: theme.colors.text }}>
+                Excluir projeto?
+              </h3>
+              <p className="text-sm mb-5" style={{ color: theme.colors.textMuted }}>
+                O projeto <span className="font-bold" style={{ color: theme.colors.textSecondary }}>"{confirmDeleteNome}"</span> será removido permanentemente. Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                  style={{
+                    backgroundColor: theme.colors.bgSecondary,
+                    color: theme.colors.textMuted,
+                    border: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-black flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: '#ff4444',
+                    color: '#fff',
+                    opacity: deleting ? 0.7 : 1,
+                  }}
+                >
+                  {deleting
+                    ? <><Loader2 size={14} className="animate-spin" /> Excluindo...</>
+                    : <><Trash2 size={14} /> Excluir</>
+                  }
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Modal */}
       <ProjetoModal
         open={modalOpen}
@@ -394,11 +505,36 @@ function EmptyState({
   theme: any
   onNew: () => void
 }) {
+  if (search) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center py-24 gap-4"
+      >
+        <div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center"
+          style={{ backgroundColor: `${theme.colors.accent}15` }}
+        >
+          <Search size={36} style={{ color: theme.colors.accent }} />
+        </div>
+        <div className="text-center">
+          <h3 className="text-lg font-bold mb-1" style={{ color: theme.colors.text }}>
+            Nenhum projeto encontrado
+          </h3>
+          <p className="text-sm" style={{ color: theme.colors.textMuted }}>
+            Nenhum resultado para "{search}"
+          </p>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-24 gap-4"
+      className="flex flex-col items-center justify-center py-16 gap-6 max-w-lg mx-auto"
     >
       <div
         className="w-20 h-20 rounded-2xl flex items-center justify-center"
@@ -406,30 +542,76 @@ function EmptyState({
       >
         <NotebookPen size={36} style={{ color: theme.colors.accent }} />
       </div>
+
       <div className="text-center">
-        <h3 className="text-lg font-bold mb-1" style={{ color: theme.colors.text }}>
-          {search ? 'Nenhum projeto encontrado' : 'Nenhum projeto ainda'}
+        <h3 className="text-xl font-black mb-2" style={{ color: theme.colors.text }}>
+          Bem-vindo ao AnotaDev!
         </h3>
         <p className="text-sm" style={{ color: theme.colors.textMuted }}>
-          {search
-            ? `Nenhum resultado para "${search}"`
-            : 'Clique no botão abaixo para criar seu primeiro projeto'}
+          Seu bloco de notas para desenvolvedores. Comece criando seu primeiro projeto e explore os recursos abaixo.
         </p>
       </div>
-      {!search && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onNew}
-          className="px-6 py-3 rounded-xl font-bold text-sm"
-          style={{
-            background: `linear-gradient(135deg, ${theme.colors.gradientFrom}, ${theme.colors.gradientTo})`,
-            color: '#fff',
-          }}
-        >
-          Criar primeiro projeto
-        </motion.button>
-      )}
+
+      {/* Dicas de onboarding */}
+      <div className="w-full flex flex-col gap-3">
+        {[
+          {
+            icon: <GitBranchIcon size={16} />,
+            title: 'Conecte seu GitHub',
+            desc: 'Sincronize commits e dados do repositório automaticamente.',
+            color: theme.colors.accent,
+          },
+          {
+            icon: <Webhook size={16} />,
+            title: 'Configure o Webhook',
+            desc: 'Receba atualizações em tempo real a cada novo push.',
+            color: theme.colors.accentSecondary,
+          },
+          {
+            icon: <CheckSquare size={16} />,
+            title: 'Use os Checklists',
+            desc: 'Organize o que falta e o que já foi implantado em cada projeto.',
+            color: '#00cc44',
+          },
+        ].map((tip, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 + i * 0.08 }}
+            className="flex items-start gap-3 p-4 rounded-xl"
+            style={{
+              backgroundColor: theme.colors.bgCard,
+              border: `1px solid ${theme.colors.border}`,
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${tip.color}20`, color: tip.color }}
+            >
+              {tip.icon}
+            </div>
+            <div>
+              <p className="text-sm font-bold" style={{ color: theme.colors.text }}>{tip.title}</p>
+              <p className="text-xs mt-0.5" style={{ color: theme.colors.textMuted }}>{tip.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onNew}
+        className="px-8 py-3 rounded-xl font-bold text-sm"
+        style={{
+          background: `linear-gradient(135deg, ${theme.colors.gradientFrom}, ${theme.colors.gradientTo})`,
+          color: '#fff',
+          boxShadow: `0 4px 20px ${theme.colors.gradientFrom}40`,
+        }}
+      >
+        Criar primeiro projeto
+      </motion.button>
     </motion.div>
   )
 }
