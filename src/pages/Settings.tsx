@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Palette, GitBranch, Database, User, Check, ExternalLink, Copy, Eye, EyeOff, Heart, Phone, AtSign, Webhook, Link, Zap, Star } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
@@ -20,6 +20,13 @@ export default function Settings() {
   const WEBHOOK_URL = 'https://cmksgidpvuhkfcqlbgkn.supabase.co/functions/v1/github-webhook'
   const [rateLimit, setRateLimit] = useState<{ remaining: number; limit: number } | null>(null)
   const [checkingRate, setCheckingRate] = useState(false)
+
+  // Garante que o secret global está sempre salvo no localStorage
+  useEffect(() => {
+    if (!localStorage.getItem('webhook-secret-global')) {
+      localStorage.setItem('webhook-secret-global', WEBHOOK_SECRET)
+    }
+  }, [])
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -49,6 +56,8 @@ export default function Settings() {
   const saveGitHub = () => {
     localStorage.setItem('gh-token', githubToken)
     localStorage.setItem('gh-username', githubUsername)
+    // Salva o secret global para herança nos projetos
+    localStorage.setItem('webhook-secret-global', WEBHOOK_SECRET)
     toast.success('Configurações do GitHub salvas!', {
       style: { background: theme.colors.bgModal, color: theme.colors.text, border: `1px solid ${theme.colors.border}` },
       iconTheme: { primary: theme.colors.accent, secondary: '#fff' },

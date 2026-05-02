@@ -183,12 +183,18 @@ Deno.serve(async (req: Request) => {
   const signatureHeader = req.headers.get('X-Hub-Signature-256')
   const results: Array<{ projectId: string; status: string; commitsAdded: number }> = []
 
+  // Secret global configurado como variável de ambiente na Edge Function
+  const globalSecret = Deno.env.get('WEBHOOK_SECRET_GLOBAL') || ''
+
   for (const projeto of projetos as Projeto[]) {
-    // ── Verifica assinatura se o projeto tem webhook_secret configurado ──
-    if (projeto.webhook_secret) {
-      const valid = await verifySignature(projeto.webhook_secret, rawBody, signatureHeader)
+    // Usa o secret do projeto, ou herda o global se não tiver
+    const secretToUse = (projeto.webhook_secret || '').trim() || globalSecret
+
+    // ── Verifica assinatura ──
+    if (secretToUse) {
+      const valid = await verifySignature(secretToUse, rawBody, signatureHeader)
       if (!valid) {
-        console.warn(`Signature mismatch for project ${projeto.id}`)
+        console.warn(`Signature mismatch for project ${projeto.id} (using ${projeto.webhook_secret ? 'project' : 'global'} secret)`)
         results.push({ projectId: projeto.id, status: 'signature_mismatch', commitsAdded: 0 })
         continue
       }

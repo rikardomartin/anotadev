@@ -37,6 +37,10 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
   const [lastCommitMsg, setLastCommitMsg] = useState('')
   const [showWebhook, setShowWebhook] = useState(false)
 
+  // Secret global das configurações (fallback)
+  const globalSecret = localStorage.getItem('webhook-secret-global') || 'AnotaDev@2026#Webhook$Ricardo!'
+  const usingGlobalSecret = !webhookSecret.trim() && !!globalSecret
+
   // GitHub auto-fill state
   const [fetchingGH, setFetchingGH] = useState(false)
   const [ghData, setGhData] = useState<{ name: string; stars: number; language: string | null } | null>(null)
@@ -425,9 +429,20 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
                   <span className="text-xs font-bold" style={{ color: theme.colors.accentSecondary }}>
                     WEBHOOK SECRET (GitHub Automação)
                   </span>
+                  {usingGlobalSecret && (
+                    <span
+                      className="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{ backgroundColor: `${theme.colors.accentSecondary}20`, color: theme.colors.accentSecondary }}
+                    >
+                      ✓ usando secret global
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs mb-3" style={{ color: theme.colors.textMuted }}>
-                  Cole o secret do webhook do GitHub. Ao detectar um novo commit, o campo "Já implantado" será atualizado automaticamente.
+                  {usingGlobalSecret
+                    ? 'Este projeto vai usar o secret global das Configurações. Deixe em branco para manter ou cole um secret específico para sobrescrever.'
+                    : 'Cole o secret do webhook do GitHub. Ao detectar um novo commit, o campo "Já implantado" será atualizado automaticamente.'
+                  }
                 </p>
                 <div className="flex gap-2 mb-3">
                   <div className="relative flex-1">
@@ -435,8 +450,8 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
                       value={webhookSecret}
                       onChange={e => setWebhookSecret(e.target.value)}
                       type={showWebhook ? 'text' : 'password'}
-                      placeholder="whsec_xxxxxxxxxxxxxxxx"
-                      style={{ ...inp, paddingRight: '40px' }}
+                      placeholder={usingGlobalSecret ? `Herdando: ${globalSecret.slice(0, 12)}...` : 'Cole um secret específico (opcional)'}
+                      style={{ ...inp, paddingRight: '40px', borderColor: usingGlobalSecret ? `${theme.colors.accentSecondary}50` : theme.colors.border }}
                       onFocus={focusStyle}
                       onBlur={blurStyle}
                     />
