@@ -123,12 +123,12 @@ export default function ProjetoCard({ projeto, githubData, onEdit, onDelete, ind
         </div>
 
         {/* Description */}
-        {(githubData?.description || projeto.descricao) && (
+        {(projeto.descricao || githubData?.description) && (
           <p
             className="text-xs leading-relaxed line-clamp-2"
             style={{ color: theme.colors.textSecondary }}
           >
-            {githubData?.description || projeto.descricao}
+            {projeto.descricao || githubData?.description}
           </p>
         )}
 
