@@ -1,17 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Read from localStorage (set via Settings page) or env vars
+// Prioridade: env vars do build (produção) > localStorage (configurado pelo usuário)
 const supabaseUrl =
-  localStorage.getItem('sb-url') ||
   import.meta.env.VITE_SUPABASE_URL ||
+  localStorage.getItem('sb-url') ||
   'https://placeholder.supabase.co'
 
 const supabaseAnonKey =
-  localStorage.getItem('sb-key') ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  localStorage.getItem('sb-key') ||
   'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+})
 
 export type ChecklistItem = {
   id: string
