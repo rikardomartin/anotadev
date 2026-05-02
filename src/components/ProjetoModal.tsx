@@ -8,7 +8,7 @@ import {
 import ReactMarkdown from 'react-markdown'
 import { useTheme } from '../context/ThemeContext'
 import type { Projeto, ChecklistItem } from '../lib/supabase'
-import { fetchGitHubRepo } from '../lib/github'
+import { fetchGitHubRepo, fetchRecentCommits, fetchRepoTopics } from '../lib/github'
 import { nanoid } from '../lib/nanoid'
 
 type Props = {
@@ -43,7 +43,90 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
 
   // GitHub auto-fill state
   const [fetchingGH, setFetchingGH] = useState(false)
-  const [ghData, setGhData] = useState<{ name: string; stars: number; language: string | null } | null>(null)
+  const [ghData, setGhData] = useState<{
+    name: string
+    stars: number
+    language: string | null
+    topics: string[]
+    commitsLoaded: number
+  } | null>(null)
+
+  // Dispara ao sair do campo OU ao colar (paste)
+  const handleGithubFill = async (url: string) => {
+    if (!url || !url.includes('github.com')) return
+    setFetchingGH(true)
+
+    try {
+      const token = localStorage.getItem('gh-token') || undefined
+
+      // Busca repo info e commits em paralelo
+      const [repoData, commitsData, topicsData] = await Promise.all([
+        fetchGitHubRepo(url, token),
+        fetchRecentCommits(url, token, 10),
+        fetchRepoTopics(url, token),
+      ])
+
+      if (repoData) {
+        // ── Nome ──
+        if (!nome) setNome(repoData.name)
+
+        // ── Descrição ──
+        if (!descricao && repoData.description) setDescricao(repoData.description)
+
+        // ── Tech Stack: linguagem principal + topics ──
+        const newTechs: string[] = []
+        if (repoData.language) newTechs.push(repoData.language)
+        topicsData.forEach(t => {
+          const formatted = t.charAt(0).toUpperCase() + t.slice(1)
+          if (!newTechs.includes(formatted)) newTechs.push(formatted)
+        })
+        if (newTechs.length > 0) {
+          setTechStack(prev => {
+            const merged = [...prev]
+            newTechs.forEach(t => { if (!merged.includes(t)) merged.push(t) })
+            return merged
+          })
+        }
+
+        setGhData({
+          name: repoData.name,
+          stars: repoData.stargazers_count,
+          language: repoData.language,
+          topics: topicsData,
+          commitsLoaded: commitsData.length,
+        })
+      }
+
+      // ── Commits → "Já implantado" ──
+      if (commitsData.length > 0) {
+        const commitItems: ChecklistItem[] = commitsData.map(c => ({
+          id: nanoid(),
+          texto: `[${c.sha}] ${c.message}`,
+          feito: true,
+        }))
+
+        // Só adiciona se não tiver itens ainda (não sobrescreve edição)
+        setConcluidos(prev => {
+          if (prev.length > 0) return prev
+          return commitItems
+        })
+
+        // Último commit
+        setLastCommitMsg(`[${commitsData[0].sha}] ${commitsData[0].message}`)
+      }
+    } finally {
+      setFetchingGH(false)
+    }
+  }
+
+  const handleGithubBlur = () => handleGithubFill(githubUrl)
+  const handleGithubPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text').trim()
+    if (pasted.includes('github.com')) {
+      // Pequeno delay para o state atualizar com o valor colado
+      setTimeout(() => handleGithubFill(pasted), 100)
+    }
+  }
 
   // UI state
   const [saving, setSaving] = useState(false)
@@ -80,22 +163,6 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
     setPendenciaInput(''); setConcluidoInput('')
     setWebhookSecret(''); setLastCommitMsg('')
     setGhData(null); setMdPreview(false)
-  }
-
-  // Auto-fill from GitHub on blur
-  const handleGithubBlur = async () => {
-    if (!githubUrl) return
-    setFetchingGH(true)
-    const data = await fetchGitHubRepo(githubUrl)
-    if (data) {
-      setGhData({ name: data.name, stars: data.stargazers_count, language: data.language })
-      if (!nome) setNome(data.name)
-      if (!descricao && data.description) setDescricao(data.description)
-      if (data.language && !techStack.includes(data.language)) {
-        setTechStack(prev => [data.language!, ...prev])
-      }
-    }
-    setFetchingGH(false)
   }
 
   // Simulate webhook: adds a fake commit to "Já implantado"
@@ -254,7 +321,7 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
                     ? <Loader2 size={12} className="animate-spin" style={{ color: theme.colors.accent }} />
                     : ghData
                     ? (
-                      <div className="flex items-center gap-2 ml-auto">
+                      <div className="flex items-center gap-2 ml-auto flex-wrap">
                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                           style={{ backgroundColor: `${theme.colors.accent}20`, color: theme.colors.accent }}>
                           ✓ {ghData.name}
@@ -268,6 +335,12 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
                             {ghData.language}
                           </span>
                         )}
+                        {ghData.commitsLoaded > 0 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: '#00cc4420', color: '#00cc44' }}>
+                            {ghData.commitsLoaded} commits
+                          </span>
+                        )}
                       </div>
                     )
                     : null
@@ -277,6 +350,7 @@ export default function ProjetoModal({ open, onClose, onSave, editingProjeto }: 
                   value={githubUrl}
                   onChange={e => setGithubUrl(e.target.value)}
                   onBlur={handleGithubBlur}
+                  onPaste={handleGithubPaste}
                   placeholder="https://github.com/usuario/repositorio"
                   style={inp}
                   onFocus={focusStyle}

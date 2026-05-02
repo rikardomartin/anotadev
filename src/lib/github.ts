@@ -94,7 +94,7 @@ export async function fetchUserRepos(username: string, token?: string): Promise<
 export async function fetchRecentCommits(
   url: string,
   token?: string,
-  perPage = 5
+  perPage = 10
 ): Promise<{ sha: string; message: string; author: string; date: string; url: string }[]> {
   const parsed = parseGitHubUrl(url)
   if (!parsed) return []
@@ -113,6 +113,28 @@ export async function fetchRecentCommits(
       date: c.commit?.author?.date || '',
       url: c.html_url || '',
     }))
+  } catch {
+    return []
+  }
+}
+
+// Fetch repository topics (tags)
+export async function fetchRepoTopics(url: string, token?: string): Promise<string[]> {
+  const parsed = parseGitHubUrl(url)
+  if (!parsed) return []
+
+  try {
+    const headers = {
+      ...buildHeaders(token),
+      Accept: 'application/vnd.github.mercy-preview+json',
+    }
+    const res = await fetch(
+      `${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}/topics`,
+      { headers }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.names || []).slice(0, 8) // máximo 8 topics
   } catch {
     return []
   }
