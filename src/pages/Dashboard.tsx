@@ -136,28 +136,40 @@ export default function Dashboard() {
   const handleSave = async (
     data: Omit<Projeto, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
-    if (editingProjeto) {
-      await atualizarProjeto(editingProjeto.id!, data)
-      toast.success('Projeto atualizado!', {
+    try {
+      if (editingProjeto) {
+        await atualizarProjeto(editingProjeto.id!, data)
+        toast.success('Projeto atualizado!', {
+          style: {
+            background: theme.colors.bgModal,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.border}`,
+          },
+          iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+        })
+      } else {
+        await criarProjeto(data)
+        toast.success('Projeto criado com sucesso!', {
+          style: {
+            background: theme.colors.bgModal,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.border}`,
+          },
+          iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+        })
+      }
+      setEditingProjeto(null)
+    } catch (err: any) {
+      console.error('Erro ao salvar projeto:', err)
+      toast.error(`Erro ao salvar: ${err.message || 'Tente novamente'}`, {
         style: {
           background: theme.colors.bgModal,
-          color: theme.colors.text,
-          border: `1px solid ${theme.colors.border}`,
+          color: '#ff4444',
+          border: '1px solid rgba(255,68,68,0.3)',
         },
-        iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
-      })
-    } else {
-      await criarProjeto(data)
-      toast.success('Projeto criado com sucesso!', {
-        style: {
-          background: theme.colors.bgModal,
-          color: theme.colors.text,
-          border: `1px solid ${theme.colors.border}`,
-        },
-        iconTheme: { primary: theme.colors.accent, secondary: '#fff' },
+        duration: 6000,
       })
     }
-    setEditingProjeto(null)
   }
 
   const handleEdit = (projeto: Projeto) => {
